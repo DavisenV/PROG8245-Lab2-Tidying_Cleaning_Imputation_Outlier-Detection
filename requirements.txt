@@ -23,6 +23,7 @@ numpy==2.5.3
 packaging==26.3
 pandas==3.0.6
 parso==0.8.7
+patsy==1.0.3
 pillow==12.3.0
 platformdirs==4.12.3
 prompt_toolkit==3.0.53
@@ -44,6 +45,7 @@ SQLAlchemy==2.1.4
 stack-data==0.6.3
 threadpoolctl==3.7.0
 tornado==6.5.10
+statsmodels==0.15.0
 traitlets==5.16.1
 typing_extensions==4.16.0
 tzdata==2026.5
