@@ -7,6 +7,7 @@ Group repository for PROG8245 (Machine Learning Programming) Lab 2. Each project
 | Section | Notebook | Dataset | Research question |
 |---|---|---|---|
 | **1 – Tidy data** | [`notebooks/pew.ipynb`](notebooks/pew.ipynb) | Neon tables `npors23_raw`–`npors25_raw` – Pew NPORS surveys 2023–2025, 16,381 respondents (licensed data, not stored in the repo) | Do adults who use the internet "almost constantly" differ in average age from internet users who go online less often? |
+| **2 – Billboard** | [`notebooks/billboard_section.ipynb`](notebooks/billboard_section.ipynb) | Neon tables `billboard_hot100_raw` and `billboard_audio_features_raw` – Billboard Hot 100 weekly charts, 1958–2021 (327,895 rows), plus Spotify audio features for 29,386 songs | Which characteristics of a song, known when it first enters the chart, help explain how many weeks it stays on the Hot 100? |
 | **3 – Data cleaning** | [`notebooks/car_section.ipynb`](notebooks/car_section.ipynb) | [`data/Car details v3.csv`](data/) – 8,128 CarDekho used-car listings | Do diesel cars achieve significantly better mileage than petrol cars, and how well can a car's listed characteristics predict its mileage? |
 | **4 – Outlier detection** | [`notebooks/diabetes.ipynb`](notebooks/diabetes.ipynb) | [`data/diabetes_dataset.csv`](data/) – 5,288 patients | Do diabetic patients have significantly higher glucose, BMI, and systolic blood pressure, and does that hold once outliers are taken into account? |
 
@@ -28,6 +29,21 @@ PYTHONPATH=src python -m pew_dataset.upload
 ```
 
 The script reads the SPSS files with `pyreadstat`, replaces the four tables, and verifies that the Neon copy matches the files exactly.
+
+### Section 2 – Billboard
+
+Reshapes chart data with `melt()` (a wide table of weekly rank columns is built first), cleans the week labels with pandas string methods, rebuilds chart dates with `Timedelta`, and handles missing ranks (dropped, not imputed). Duplicate rows and impossible Spotify values are removed, and a before/after validation table checks the result. It then:
+
+- engineers song-level features known at debut (debut rank and era, genre family, duration, explicit flag, audio features) and keeps leaking variables out;
+- compares outliers with the box plot, IQR rule, and Z-score, and checks that the conclusions survive removing them;
+- chooses regression features with correlation tests, Welch's t-tests with Mann–Whitney U, and ANOVA (Holm correction, effect sizes, VIF);
+- fits a linear regression of log(weeks on chart) in statsmodels and in a scikit-learn `Pipeline` with a mean baseline and 5-fold cross-validation (test R² 0.19).
+
+The data comes from the TidyTuesday 2021-09-14 release. The two files are large (about 46 MB and 10 MB), so they are not in Git: they are stored in Neon, and the notebook reads them from there. Without a `.env`, it falls back to local copies in `data/`. To load or refresh the Neon tables, run this once from the project root. It downloads the files into `data/` if they are missing, uploads them in their original row order, and verifies the Neon copy matches:
+
+```bash
+PYTHONPATH=src python -m billboard_dataset.upload
+```
 
 ### Section 3 – Car details
 
@@ -51,6 +67,7 @@ Removes physiologically impossible values, engineers clinical features (BMI and 
 │   └── diabetes_dataset.csv      # Section 4 raw data
 ├── notebooks/
 │   ├── pew.ipynb                 # Section 1
+│   ├── billboard_section.ipynb   # Section 2
 │   ├── car_section.ipynb         # Section 3
 │   └── diabetes.ipynb            # Section 4
 ├── src/
@@ -58,6 +75,7 @@ Removes physiologically impossible values, engineers clinical features (BMI and 
 │   │   ├── config.py             #   .env location and variable name
 │   │   └── database.py           #   NeonDatabase: connect, upload, read (incl. row-order-preserving upload/read)
 │   ├── pew_dataset/              # Section 1 helpers (value labels, validation, one-time Neon upload)
+│   ├── billboard_dataset/        # Section 2 helpers (Neon/CSV loading, one-time download and Neon upload)
 │   ├── car_dataset/              # Section 3 helpers (loading, cleaning, Neon upload/read)
 │   └── diabetes_dataset/         # Section 4 classes (preparation, EDA, tests, outliers)
 ├── results/                      # CSV reports written by the Section 1 notebook (git-ignored)
@@ -116,16 +134,16 @@ NEON_DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=requi
 - You can find the connection string in the Neon dashboard under **Connect**. Ask the team for the shared database's string, or create a free Neon project of your own.
 - `.env` is listed in `.gitignore`, so the password is never committed. **Never paste the connection string into a notebook or commit it.**
 - **Section 1 (Pew) requires `.env`**, because its licensed survey data is stored only in Neon.
-- **Sections 3 and 4 still run without a `.env`.** They print a warning and read their local CSV in `data/` instead, and the analysis results are identical either way.
+- **Sections 2, 3 and 4 still run without a `.env`.** They print a warning and read local CSVs in `data/` instead, and the analysis results are identical either way. Section 2's CSVs are not in Git; download them first (see Section 2 above).
 
-Each section writes only its own tables (`npors23_raw`–`npors25_raw` and `npors_value_labels`, `car_details_raw`, `diabetes_raw`) and replaces them on every run, so sections never overwrite each other and re-running never duplicates rows.
+Each section writes only its own tables (`npors23_raw`–`npors25_raw` and `npors_value_labels`, `billboard_hot100_raw` and `billboard_audio_features_raw`, `car_details_raw`, `diabetes_raw`) and replaces them whenever it uploads, so sections never overwrite each other and re-running never duplicates rows.
 
 ## Running the notebooks
 
 1. Open the project folder in VS Code (or start `jupyter lab` from the project root).
 2. Open a notebook from `notebooks/`.
 3. Select the **`.venv`** interpreter as the kernel. In VS Code, use the kernel picker in the top-right corner of the notebook.
-4. Choose **Restart** and then **Run All**. Each notebook should run from top to bottom without errors.
+4. Choose **Restart** and then **Run All**. Each notebook should run from top to bottom without errors. The Section 2 notebook takes longer because of its large chart table.
 
 The first code cell of each notebook reports where the data came from, for example `Loaded 8,128 rows x 13 columns from Neon table 'car_details_raw'`.
 
@@ -133,7 +151,8 @@ The first code cell of each notebook reports where the data came from, for examp
 
 | Problem | Fix |
 |---|---|
-| `ModuleNotFoundError: No module named 'pandas'` (or `sqlalchemy`, `psycopg`, `pyreadstat`…) | The notebook kernel isn't using `.venv`. Select the `.venv` kernel, or re-run `pip install -r requirements.txt` with the environment activated. |
-| `ModuleNotFoundError: No module named 'car_dataset'` / `'pew_dataset'` / `'common'` | Open the notebook from the `notebooks/` folder, or start Jupyter from the project root, so the notebook can find `src/`. |
+| `ModuleNotFoundError: No module named 'pandas'` (or `sqlalchemy`, `psycopg`, `pyreadstat`, `statsmodels`…) | The notebook kernel isn't using `.venv`. Select the `.venv` kernel, or re-run `pip install -r requirements.txt` with the environment activated. |
+| `ModuleNotFoundError: No module named 'car_dataset'` / `'pew_dataset'` / `'billboard_dataset'` / `'common'` | Open the notebook from the `notebooks/` folder, or start Jupyter from the project root, so the notebook can find `src/`. |
 | `WARNING: NEON_DATABASE_URL is not set in .env` | Expected if you haven't created `.env`: the notebook falls back to the local CSV. Add the connection string (step 4) to use Neon. |
+| `FileNotFoundError` for `billboard_hot100.csv` | You are running Section 2 without a `.env`, and the local CSVs have not been downloaded. Add the connection string (step 4), or download the files (see Section 2 above). |
 | Connection or SSL error | Check that the connection string ends with `?sslmode=require` and that your Neon project is not suspended. |
