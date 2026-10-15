@@ -1,4 +1,4 @@
-"""Read and write the diabetes data in a Neon (PostgreSQL) database."""
+"""Read and write any section's data in the shared Neon (PostgreSQL) database."""
 
 from __future__ import annotations
 

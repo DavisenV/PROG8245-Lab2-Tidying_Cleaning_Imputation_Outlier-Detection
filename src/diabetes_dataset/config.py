@@ -6,18 +6,18 @@ Keeping column names, thresholds, and colours in one place means every module
 
 from pathlib import Path
 
+from common.config import ENV_PATH, ENV_VAR_NAME  # shared .env settings (src/common/config.py)
+
 # --------------------------------------------------------------------------- #
 # Paths
 # --------------------------------------------------------------------------- #
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_CSV_PATH = DATA_DIR / "diabetes_dataset.csv"
-ENV_PATH = PROJECT_ROOT / ".env"
 
 # --------------------------------------------------------------------------- #
 # Database
 # --------------------------------------------------------------------------- #
-ENV_VAR_NAME = "NEON_DATABASE_URL"
 RAW_TABLE_NAME = "diabetes_raw"
 
 # --------------------------------------------------------------------------- #

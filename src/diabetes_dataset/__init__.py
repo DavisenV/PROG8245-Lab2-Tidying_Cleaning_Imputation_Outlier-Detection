@@ -1,6 +1,6 @@
 """Reusable classes for the diabetes analysis in ``notebooks/diabetes.ipynb``."""
 
-from .database import NeonDatabase
+from common.database import NeonDatabase  # shared with Section 3; re-exported so existing imports keep working
 from .eda import EDAVisualizer, apply_plot_style, label_for
 from .hypothesis_tests import GroupComparison, NormalityChecker, format_p_values
 from .outliers import OutlierDetector

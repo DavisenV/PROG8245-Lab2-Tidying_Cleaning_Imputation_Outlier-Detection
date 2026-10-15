@@ -1,15 +1,11 @@
 """Reusable helpers for loading and preparing the CarDekho 'Car details v3' dataset."""
 
-from pathlib import Path
-
 import pandas as pd
 
-# Resolve the data path from this file's location, so it works no matter
-# where the notebook or tests are run from.
-DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "Car details v3.csv"
+from .config import RAW_CSV_PATH
 
 
-def load_car_data(path=DATA_PATH, na_values=None):
+def load_car_data(path=RAW_CSV_PATH, na_values=None):
     """Read the raw car CSV. Extra strings in `na_values` are treated as missing."""
     return pd.read_csv(path, na_values=na_values)
 
