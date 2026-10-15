@@ -19,6 +19,3 @@ results/
 # ARDA survey downloads: licensed data, stored in Neon instead (see README)
 data/*.sav
 
-# Billboard downloads (Section 2): large files, stored in Neon instead (see README)
-data/billboard_hot100.csv
-data/billboard_audio_features.csv

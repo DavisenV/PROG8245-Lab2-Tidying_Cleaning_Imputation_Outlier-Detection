@@ -39,7 +39,7 @@ Reshapes chart data with `melt()` (a wide table of weekly rank columns is built 
 - chooses regression features with correlation tests, Welch's t-tests with Mann–Whitney U, and ANOVA (Holm correction, effect sizes, VIF);
 - fits a linear regression of log(weeks on chart) in statsmodels and in a scikit-learn `Pipeline` with a mean baseline and 5-fold cross-validation (test R² 0.19).
 
-The data comes from the TidyTuesday 2021-09-14 release. The two files are large (about 46 MB and 10 MB), so they are not in Git: they are stored in Neon, and the notebook reads them from there. Without a `.env`, it falls back to local copies in `data/`. To load or refresh the Neon tables, run this once from the project root. It downloads the files into `data/` if they are missing, uploads them in their original row order, and verifies the Neon copy matches:
+The data comes from the TidyTuesday 2021-09-14 release. Both files (about 46 MB and 10 MB) are committed in `data/`. They are also stored in Neon, and the notebook reads them from there; without a `.env`, it reads the committed CSVs instead. To load or refresh the Neon tables, run this once from the project root. It uploads the files in their original row order and verifies the Neon copy matches:
 
 ```bash
 PYTHONPATH=src python -m billboard_dataset.upload
@@ -134,7 +134,7 @@ NEON_DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=requi
 - You can find the connection string in the Neon dashboard under **Connect**. Ask the team for the shared database's string, or create a free Neon project of your own.
 - `.env` is listed in `.gitignore`, so the password is never committed. **Never paste the connection string into a notebook or commit it.**
 - **Section 1 (Pew) requires `.env`**, because its licensed survey data is stored only in Neon.
-- **Sections 2, 3 and 4 still run without a `.env`.** They print a warning and read local CSVs in `data/` instead, and the analysis results are identical either way. Section 2's CSVs are not in Git; download them first (see Section 2 above).
+- **Sections 2, 3 and 4 still run without a `.env`.** They print a warning and read local CSVs in `data/` instead, and the analysis results are identical either way.
 
 Each section writes only its own tables (`npors23_raw`–`npors25_raw` and `npors_value_labels`, `billboard_hot100_raw` and `billboard_audio_features_raw`, `car_details_raw`, `diabetes_raw`) and replaces them whenever it uploads, so sections never overwrite each other and re-running never duplicates rows.
 
@@ -154,5 +154,4 @@ The first code cell of each notebook reports where the data came from, for examp
 | `ModuleNotFoundError: No module named 'pandas'` (or `sqlalchemy`, `psycopg`, `pyreadstat`, `statsmodels`…) | The notebook kernel isn't using `.venv`. Select the `.venv` kernel, or re-run `pip install -r requirements.txt` with the environment activated. |
 | `ModuleNotFoundError: No module named 'car_dataset'` / `'pew_dataset'` / `'billboard_dataset'` / `'common'` | Open the notebook from the `notebooks/` folder, or start Jupyter from the project root, so the notebook can find `src/`. |
 | `WARNING: NEON_DATABASE_URL is not set in .env` | Expected if you haven't created `.env`: the notebook falls back to the local CSV. Add the connection string (step 4) to use Neon. |
-| `FileNotFoundError` for `billboard_hot100.csv` | You are running Section 2 without a `.env`, and the local CSVs have not been downloaded. Add the connection string (step 4), or download the files (see Section 2 above). |
 | Connection or SSL error | Check that the connection string ends with `?sslmode=require` and that your Neon project is not suspended. |
