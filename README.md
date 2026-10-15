@@ -167,7 +167,7 @@ The section notebooks in `notebooks/` are the source of truth. After editing one
 python scripts/build_week5lab.py
 ```
 
-The introduction and the Replicability Check come from `scripts/week5lab_intro.md`, and the closing checklist from `scripts/week5lab_checklist.md`.
+The introduction, the Replicability Check and the closing checklist are written in `scripts/build_week5lab.py` itself (`INTRO_CELLS` and `CHECKLIST_CELL`).
 
 ## Troubleshooting
 
