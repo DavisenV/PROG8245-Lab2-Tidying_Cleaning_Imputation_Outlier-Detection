@@ -11,3 +11,5 @@ wheels/
 .env
 .env.local
 .config
+data/billboard_hot100.csv
+data/billboard_audio_features.csv
