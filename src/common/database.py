@@ -13,6 +13,8 @@ from sqlalchemy.engine import Engine
 from .config import ENV_PATH, ENV_VAR_NAME
 
 PLACEHOLDER_MARKER = "<"  # the .env placeholder looks like "<your-connection-string>"
+MAX_PARAMS_PER_INSERT = 30_000  # stays under both PostgreSQL's and SQLite's per-statement limits
+ROW_ID = "row_id"  # helper column used by upload_ordered / read_ordered
 
 
 class NeonDatabase:
@@ -98,9 +100,26 @@ class NeonDatabase:
             if_exists=if_exists,
             index=False,
             method="multi",   # send many rows per INSERT (much faster over the internet)
-            chunksize=1000,
+            # Each cell is one query parameter, and databases cap parameters per
+            # statement (PostgreSQL 65,535; SQLite 32,766), so wide tables need
+            # fewer rows per INSERT.
+            chunksize=max(1, MAX_PARAMS_PER_INSERT // max(1, len(df.columns))),
         )
         return self.count_rows(table_name)
+
+    def upload_ordered(self, df: pd.DataFrame, table_name: str) -> int:
+        """Upload ``df`` with a ``row_id`` column so its row order can be restored.
+
+        SQL tables have no guaranteed row order, so a plain ``SELECT *`` may come
+        back shuffled. Use this with ``read_ordered`` whenever later steps
+        (head/tail, duplicates, sampling, train/test splits) depend on row order.
+        """
+        return self.upload_dataframe(df.rename_axis(ROW_ID).reset_index(), table_name)
+
+    def read_ordered(self, table_name: str) -> pd.DataFrame:
+        """Read a table written by ``upload_ordered`` back in its original row order."""
+        df = self.read_query(f'SELECT * FROM "{table_name}" ORDER BY "{ROW_ID}"')
+        return df.drop(columns=ROW_ID)
 
     def upload_csv(self, csv_path: Path, table_name: str) -> int:
         """Read a CSV file and upload it to ``table_name``."""
