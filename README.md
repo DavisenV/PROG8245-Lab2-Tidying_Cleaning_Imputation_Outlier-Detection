@@ -6,8 +6,28 @@ Group repository for PROG8245 (Machine Learning Programming) Lab 2. Each project
 
 | Section | Notebook | Dataset | Research question |
 |---|---|---|---|
+| **1 – Tidy data** | [`notebooks/pew.ipynb`](notebooks/pew.ipynb) | Neon tables `npors23_raw`–`npors25_raw` – Pew NPORS surveys 2023–2025, 16,381 respondents (licensed data, not stored in the repo) | Do adults who use the internet "almost constantly" differ in average age from internet users who go online less often? |
 | **3 – Data cleaning** | [`notebooks/car_section.ipynb`](notebooks/car_section.ipynb) | [`data/Car details v3.csv`](data/) – 8,128 CarDekho used-car listings | Do diesel cars achieve significantly better mileage than petrol cars, and how well can a car's listed characteristics predict its mileage? |
 | **4 – Outlier detection** | [`notebooks/diabetes.ipynb`](notebooks/diabetes.ipynb) | [`data/diabetes_dataset.csv`](data/) – 5,288 patients | Do diabetic patients have significantly higher glucose, BMI, and systolic blood pressure, and does that hold once outliers are taken into account? |
+
+### Section 1 – Pew NPORS
+
+Validates and harmonizes three yearly Pew Research Center NPORS releases (distributed by ARDA): it checks every answer code against the codebook, keeps refusals (code 99) separate from real answers, and aligns income bands and internet-use categories across years. It then:
+
+- compares missing-value strategies for age and demonstrates `SimpleImputer` on copies only;
+- flags age outliers with Z-score and IQR rules and records each decision in a log;
+- reshapes six shared survey questions with `melt()` (98,286 respondent–question rows) and visualizes them;
+- tests whether mean age differs by internet-use intensity in 2024 (Q-Q plots, Shapiro–Wilk, Welch's t-test).
+
+**The data lives only in Neon.** The ARDA downloads are licensed (downloading requires accepting ARDA's agreement), so they are not committed. Each year is stored as raw numeric codes (`npors23_raw`, `npors24_raw`, `npors25_raw`), with the SPSS value labels in `npors_value_labels`, and the notebook reads those tables. This section therefore **needs the Neon connection string** in `.env`. Acknowledge both ARDA and Pew Research Center when using the data.
+
+To load or refresh the data in Neon, whoever holds the ARDA downloads saves them as `data/NPORS23.sav`, `data/NPORS24.sav` and `data/NPORS25.sav` (git-ignored), then runs this from the project root:
+
+```bash
+PYTHONPATH=src python -m pew_dataset.upload
+```
+
+The script reads the SPSS files with `pyreadstat`, replaces the four tables, and verifies that the Neon copy matches the files exactly.
 
 ### Section 3 – Car details
 
@@ -30,14 +50,17 @@ Removes physiologically impossible values, engineers clinical features (BMI and 
 │   ├── Car details v3.csv        # Section 3 raw data
 │   └── diabetes_dataset.csv      # Section 4 raw data
 ├── notebooks/
+│   ├── pew.ipynb                 # Section 1
 │   ├── car_section.ipynb         # Section 3
 │   └── diabetes.ipynb            # Section 4
 ├── src/
 │   ├── common/                   # shared by all sections
 │   │   ├── config.py             #   .env location and variable name
-│   │   └── database.py           #   NeonDatabase: connect, upload, read
+│   │   └── database.py           #   NeonDatabase: connect, upload, read (incl. row-order-preserving upload/read)
+│   ├── pew_dataset/              # Section 1 helpers (value labels, validation, one-time Neon upload)
 │   ├── car_dataset/              # Section 3 helpers (loading, cleaning, Neon upload/read)
 │   └── diabetes_dataset/         # Section 4 classes (preparation, EDA, tests, outliers)
+├── results/                      # CSV reports written by the Section 1 notebook (git-ignored)
 ├── week5Lab_Students.ipynb       # original assignment handout
 ├── requirements.txt
 └── README.md
@@ -82,7 +105,7 @@ If you use [uv](https://docs.astral.sh/uv/), the equivalent is `uv venv` followe
 
 To use JupyterLab instead of VS Code, also run `pip install jupyterlab`.
 
-### 4. Connect to the Neon database (optional)
+### 4. Connect to the Neon database
 
 The notebooks upload their data to a [Neon](https://neon.tech) PostgreSQL database and read it back from there. Create a file named **`.env`** in the project root containing your connection string:
 
@@ -92,9 +115,10 @@ NEON_DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=requi
 
 - You can find the connection string in the Neon dashboard under **Connect**. Ask the team for the shared database's string, or create a free Neon project of your own.
 - `.env` is listed in `.gitignore`, so the password is never committed. **Never paste the connection string into a notebook or commit it.**
-- **Without a `.env`, the notebooks still run.** They print a warning and read the local CSV in `data/` instead. The analysis results are identical either way.
+- **Section 1 (Pew) requires `.env`**, because its licensed survey data is stored only in Neon.
+- **Sections 3 and 4 still run without a `.env`.** They print a warning and read their local CSV in `data/` instead, and the analysis results are identical either way.
 
-Each section writes only its own table (`car_details_raw`, `diabetes_raw`) and replaces it on every run, so sections never overwrite each other and re-running never duplicates rows.
+Each section writes only its own tables (`npors23_raw`–`npors25_raw` and `npors_value_labels`, `car_details_raw`, `diabetes_raw`) and replaces them on every run, so sections never overwrite each other and re-running never duplicates rows.
 
 ## Running the notebooks
 
@@ -109,7 +133,7 @@ The first code cell of each notebook reports where the data came from, for examp
 
 | Problem | Fix |
 |---|---|
-| `ModuleNotFoundError: No module named 'pandas'` (or `sqlalchemy`, `psycopg`…) | The notebook kernel isn't using `.venv`. Select the `.venv` kernel, or re-run `pip install -r requirements.txt` with the environment activated. |
-| `ModuleNotFoundError: No module named 'car_dataset'` / `'common'` | Open the notebook from the `notebooks/` folder, or start Jupyter from the project root, so the notebook can find `src/`. |
+| `ModuleNotFoundError: No module named 'pandas'` (or `sqlalchemy`, `psycopg`, `pyreadstat`…) | The notebook kernel isn't using `.venv`. Select the `.venv` kernel, or re-run `pip install -r requirements.txt` with the environment activated. |
+| `ModuleNotFoundError: No module named 'car_dataset'` / `'pew_dataset'` / `'common'` | Open the notebook from the `notebooks/` folder, or start Jupyter from the project root, so the notebook can find `src/`. |
 | `WARNING: NEON_DATABASE_URL is not set in .env` | Expected if you haven't created `.env`: the notebook falls back to the local CSV. Add the connection string (step 4) to use Neon. |
 | Connection or SSL error | Check that the connection string ends with `?sslmode=require` and that your Neon project is not suspended. |
