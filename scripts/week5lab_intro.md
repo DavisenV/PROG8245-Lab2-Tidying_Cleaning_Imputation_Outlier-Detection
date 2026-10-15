@@ -13,7 +13,7 @@ The purpose of this lab is to practice the data-preprocessing work that normally
 ### How to reproduce this notebook
 
 1. Create a virtual environment with **Python 3.13** and run `pip install -r requirements.txt` (exact versions from `pip freeze`).
-2. Create a `.env` file in the project root containing `NEON_DATABASE_URL=<connection string>` (see the README). **Section 1 needs it**: its licensed Pew survey data is stored only in the team's Neon database and cannot be published in the repository. Sections 2–4 also read from Neon, but fall back to the CSV files committed in `data/` when `.env` is missing.
+2. Create a `.env` file in the project root containing `NEON_DATABASE_URL=<connection string>` (see the README). **Section 1 needs it**: its licensed Pew survey data is stored only in the team's Neon database and cannot be published in the repository. Sections 2–4 also read from Neon, but fall back to the CSV files committed in `data/` when `.env` is missing. The notebook **only reads** from the database, so a read-only login is enough.
 3. Open this notebook, select the `.venv` kernel, and choose **Restart** then **Run All**.
 
 > **Without the Neon connection string, Run All stops at Section 1.** Ask the team for the connection string. Sections 2–4 can still be run on their own from `notebooks/`.
@@ -38,6 +38,7 @@ The purpose of this lab is to practice the data-preprocessing work that normally
 | Uploading the wide Pew tables to Neon failed: too many query parameters in one `INSERT` | Batch size is now set from the number of columns (`src/common/database.py`) |
 | SQL tables have no guaranteed row order, which changed duplicate handling and train/test splits | Tables are uploaded with a `row_id` and read back with `ORDER BY row_id` |
 | A True/False column (`spotify_track_explicit`) changed type after the database round trip | Converted back to True/False on loading (`src/billboard_dataset/loading.py`) |
+| Sections 3 and 4 uploaded their CSV to Neon on every run, so they would fail with a read-only login | Uploading moved to one-time scripts (`python -m car_dataset.upload`, `python -m diabetes_dataset.upload`); every section now only reads from Neon |
 
 ### Test on a second machine
 

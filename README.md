@@ -56,9 +56,13 @@ Cleans the car listings (strips units from text columns, separates CNG/LPG cars 
 - tests diesel vs petrol mileage (Q-Q plots, Shapiro–Wilk, Levene, Welch's t-test, Mann–Whitney U);
 - trains a linear regression that predicts mileage, compared against a mean baseline on held-out data (R² 0.72, MAPE 8.8%).
 
+The notebook reads `car_details_raw` from Neon (or `data/Car details v3.csv` without a `.env`). To load or refresh the Neon table, run `PYTHONPATH=src python -m car_dataset.upload` from the project root.
+
 ### Section 4 – Diabetes
 
 Removes physiologically impossible values, engineers clinical features (BMI and blood-pressure categories, age groups), and compares diabetic and non-diabetic patients with normality checks, Welch's t-tests, and Mann–Whitney U. It then applies the four outlier methods (box plot, scatter plot, Z-score, IQR) and checks whether the conclusions survive outlier treatment.
+
+The notebook reads `diabetes_raw` from Neon (or `data/diabetes_dataset.csv` without a `.env`). To load or refresh the Neon table, run `PYTHONPATH=src python -m diabetes_dataset.upload` from the project root.
 
 ## Project structure
 
@@ -80,7 +84,7 @@ Removes physiologically impossible values, engineers clinical features (BMI and 
 │   │   └── database.py           #   NeonDatabase: connect, upload, read (incl. row-order-preserving upload/read)
 │   ├── pew_dataset/              # Section 1 helpers (value labels, validation, one-time Neon upload)
 │   ├── billboard_dataset/        # Section 2 helpers (Neon/CSV loading, one-time download and Neon upload)
-│   ├── car_dataset/              # Section 3 helpers (loading, cleaning, Neon upload/read)
+│   ├── car_dataset/              # Section 3 helpers (loading, cleaning, Neon read, one-time Neon upload)
 │   └── diabetes_dataset/         # Section 4 classes (preparation, EDA, tests, outliers)
 ├── results/                      # CSV reports written by the Section 1 notebook (git-ignored)
 ├── scripts/
@@ -131,7 +135,7 @@ To use JupyterLab instead of VS Code, also run `pip install jupyterlab`.
 
 ### 4. Connect to the Neon database
 
-The notebooks upload their data to a [Neon](https://neon.tech) PostgreSQL database and read it back from there. Create a file named **`.env`** in the project root containing your connection string:
+The notebooks read their data from a shared [Neon](https://neon.tech) PostgreSQL database. **They never write to it**, so a read-only login is enough to run them; each section's data is loaded into Neon once with its upload script (`PYTHONPATH=src python -m <section>_dataset.upload`). Create a file named **`.env`** in the project root containing your connection string:
 
 ```text
 NEON_DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=require
@@ -142,7 +146,7 @@ NEON_DATABASE_URL=postgresql://<user>:<password>@<host>/<database>?sslmode=requi
 - **Section 1 (Pew) requires `.env`**, because its licensed survey data is stored only in Neon.
 - **Sections 2, 3 and 4 still run without a `.env`.** They print a warning and read local CSVs in `data/` instead, and the analysis results are identical either way.
 
-Each section writes only its own tables (`npors23_raw`–`npors25_raw` and `npors_value_labels`, `billboard_hot100_raw` and `billboard_audio_features_raw`, `car_details_raw`, `diabetes_raw`) and replaces them whenever it uploads, so sections never overwrite each other and re-running never duplicates rows.
+Each section writes only its own tables (`npors23_raw`–`npors25_raw` and `npors_value_labels`, `billboard_hot100_raw` and `billboard_audio_features_raw`, `car_details_raw`, `diabetes_raw`) and its upload script replaces them on every run, so sections never overwrite each other and re-uploading never duplicates rows.
 
 ## Running the notebooks
 
