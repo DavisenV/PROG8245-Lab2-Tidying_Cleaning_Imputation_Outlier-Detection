@@ -2,6 +2,8 @@
 
 Group repository for PROG8245 (Machine Learning Programming) Lab 2. Each project takes a raw dataset, stores it in a shared Neon PostgreSQL database, loads it back into pandas, and works through data preparation, exploratory data analysis, and inferential statistics. Each notebook opens with a research question and ends with its answer.
 
+**The submission notebook is [`week5Lab.ipynb`](week5Lab.ipynb)**: all four sections in one notebook, in the handout's order, with a Replicability Check at the top. It is built from the four section notebooks in `notebooks/` (see [Rebuilding `week5Lab.ipynb`](#rebuilding-week5labipynb)).
+
 ## Projects
 
 | Section | Notebook | Dataset | Research question |
@@ -63,6 +65,8 @@ Removes physiologically impossible values, engineers clinical features (BMI and 
 ```text
 .
 ├── data/
+│   ├── billboard_hot100.csv      # Section 2 raw data (TidyTuesday)
+│   ├── billboard_audio_features.csv
 │   ├── Car details v3.csv        # Section 3 raw data
 │   └── diabetes_dataset.csv      # Section 4 raw data
 ├── notebooks/
@@ -79,7 +83,9 @@ Removes physiologically impossible values, engineers clinical features (BMI and 
 │   ├── car_dataset/              # Section 3 helpers (loading, cleaning, Neon upload/read)
 │   └── diabetes_dataset/         # Section 4 classes (preparation, EDA, tests, outliers)
 ├── results/                      # CSV reports written by the Section 1 notebook (git-ignored)
-├── week5Lab_Students.ipynb       # original assignment handout
+├── scripts/
+│   └── build_week5lab.py         # combines the section notebooks into week5Lab.ipynb
+├── week5Lab.ipynb                # submission notebook: all four sections
 ├── requirements.txt
 └── README.md
 ```
@@ -141,11 +147,23 @@ Each section writes only its own tables (`npors23_raw`–`npors25_raw` and `npor
 ## Running the notebooks
 
 1. Open the project folder in VS Code (or start `jupyter lab` from the project root).
-2. Open a notebook from `notebooks/`.
+2. Open **`week5Lab.ipynb`** (all four sections), or a single section from `notebooks/`.
 3. Select the **`.venv`** interpreter as the kernel. In VS Code, use the kernel picker in the top-right corner of the notebook.
-4. Choose **Restart** and then **Run All**. Each notebook should run from top to bottom without errors. The Section 2 notebook takes longer because of its large chart table.
+4. Choose **Restart** and then **Run All**. Each notebook should run from top to bottom without errors. `week5Lab.ipynb` takes about a minute and a half; Section 2 is the slowest part because of its large chart table.
 
-The first code cell of each notebook reports where the data came from, for example `Loaded 8,128 rows x 13 columns from Neon table 'car_details_raw'`.
+Each section's data-loading cell reports where the data came from, for example `Loaded 8,128 rows x 13 columns from Neon table 'car_details_raw'`.
+
+> **Without a `.env`, Run All of `week5Lab.ipynb` stops at Section 1**, whose licensed data is only in Neon. Sections 2–4 can still be run individually from `notebooks/`.
+
+### Rebuilding `week5Lab.ipynb`
+
+The section notebooks in `notebooks/` are the source of truth. After editing one, rebuild the combined notebook from the project root, then open it and choose **Restart** and **Run All** so its outputs are refreshed:
+
+```bash
+python scripts/build_week5lab.py
+```
+
+The introduction and the Replicability Check come from `scripts/week5lab_intro.md`, and the closing checklist from `scripts/week5lab_checklist.md`.
 
 ## Troubleshooting
 
