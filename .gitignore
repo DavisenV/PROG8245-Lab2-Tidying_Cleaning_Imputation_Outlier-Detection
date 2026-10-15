@@ -8,6 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+venv/
+env/
 .env
 .env.local
 .config
@@ -19,3 +21,5 @@ results/
 # ARDA survey downloads: licensed data, stored in Neon instead (see README)
 data/*.sav
 
+# Jupyter autosave copies
+.ipynb_checkpoints/
